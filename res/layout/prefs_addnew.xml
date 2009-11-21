@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+	xmlns:android="http://schemas.android.com/apk/res/android"
+	android:title="@string/add_new_portfolio">
+	<ListPreference
+		android:key="institution_list"
+		android:title="@string/institution_list_label"
+	 />
+	<PreferenceCategory
+		android:key="institution_auth_prefs"
+		android:title="@string/auth_details" />
+</PreferenceScreen>

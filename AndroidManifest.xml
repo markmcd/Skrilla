@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="cd.markm.skrilla"
+      android:versionCode="1"
+      android:versionName="1.0">
+    <application android:icon="@drawable/icon" android:label="@string/app_name">
+        <activity android:name=".SkrillaPrefs"
+                  android:label="@string/app_name">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    	<activity android:name="PortfolioAdd" android:label="@string/add_new_portfolio"></activity>
+    
+        <!-- broadcast receiver to handle widget updates -->
+        <receiver android:name=".BalanceWidget" android:label="@string/balance_widget_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data android:name="android.appwidget.provider" android:resource="@xml/widget_balance" />
+        </receiver>
+        
+        <!-- service to perform updates -->        
+        <service android:name=".BalanceWidget$UpdateService" />
+        
+    </application>
+    
+    <uses-sdk android:minSdkVersion="4" />
+
+</manifest> 
