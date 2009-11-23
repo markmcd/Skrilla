@@ -2,7 +2,6 @@ package cd.markm.skrilla;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import android.os.Bundle;
 import android.util.Log;
@@ -65,14 +64,14 @@ public class PortfolioAdd extends PreferenceActivity
 			try {
 				FinancialInstitution fi = FinancialInstitutionFactory
 					.GetInstitution((String) newValue);
-				Map<String, FinancialInstitution.DetailsType> authDetails = 
+				AuthDetails authDetails = 
 					fi.authenticationDetails();
 				int i = 0;
-				for (String label : authDetails.keySet()) {
+				for (String label : authDetails.getDefs()) {
 					Preference p;
 					
 					// TODO these need to be styled properly
-					switch (authDetails.get(label)) {
+					switch (authDetails.getDef(label)) {
 					case STRING:
 						p = new EditTextPreference(pc.getContext());
 						p.setTitle(label);

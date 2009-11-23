@@ -1,5 +1,6 @@
 package cd.markm.skrilla;
 
+import cd.markm.skrilla.banks.CommonwealthBank;
 import android.app.Service;
 import android.appwidget.AppWidgetManager;
 import android.appwidget.AppWidgetProvider;
@@ -43,7 +44,9 @@ public class BalanceWidget extends AppWidgetProvider {
 					R.layout.widget_balance);
 			
 			// TODO load selected account details from prefs page
-			
+			FinancialInstitution bank = new CommonwealthBank();
+			UsernamePasswordAuth creds = new UsernamePasswordAuth("u", "p");
+			bank.getAccounts(creds);
 			
 			// set the date & time 
 			Time now = new Time();

@@ -1,5 +1,8 @@
 package cd.markm.skrilla;
 
+//This factory would be used to load the lists of available banks and create the classes
+//when they're needed - currently only supporting the one example bank (CBA)
+
 import java.util.ArrayList;
 import java.util.List;
 
