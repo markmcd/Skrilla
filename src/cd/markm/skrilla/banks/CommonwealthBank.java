@@ -1,11 +1,7 @@
 package cd.markm.skrilla.banks;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Currency;
 import java.util.List;
 
 import org.apache.http.HttpEntity;
@@ -26,6 +22,8 @@ import org.htmlparser.filters.OrFilter;
 import org.htmlparser.filters.TagNameFilter;
 import org.htmlparser.tags.FormTag;
 import org.htmlparser.tags.InputTag;
+import org.htmlparser.tags.LinkTag;
+import org.htmlparser.tags.Span;
 import org.htmlparser.util.NodeList;
 
 import android.util.Log;
@@ -58,17 +56,20 @@ public class CommonwealthBank extends FinancialInstitution {
 	public List<Account> getAccounts(UsernamePasswordAuth upa) {
 		List<Account> accounts = new ArrayList<Account>();
 		
-		// first we load up the form page & rip out all the internal variables 
-		DefaultHttpClient client = new DefaultHttpClient();
-		HttpGet loginpage = new HttpGet(LOGIN_PAGE);
-		
 		try {
+			// first we load up the form page & rip out all the internal variables 
+			DefaultHttpClient client = new DefaultHttpClient();
+			HttpGet loginpage = new HttpGet(LOGIN_PAGE);
+			
 			HttpResponse response = client.execute(loginpage);
 			Log.i(TAG, "Executed, status: "+response.getStatusLine());
 			// TODO some kind of status checking if we need it
 			
 			HttpEntity body = response.getEntity();
 			String content = Util.convertStreamToString(body.getContent());
+			Log.i(TAG, "Content length is "+content.length()+" bytes.");
+			
+			// TODO handle maintenance mode - see misc/CBAmaintmode.txt
 			
 			Parser parser = new Parser(content);
 			
@@ -131,9 +132,56 @@ public class CommonwealthBank extends FinancialInstitution {
 			HttpPost post = new HttpPost(action);
 			post.setEntity(new UrlEncodedFormEntity(formVals));
 			response = client.execute(post);
-			HttpEntity entity = response.getEntity();
+			body = response.getEntity();
+			
+			// TODO handle failed login
 			
 			Log.i(TAG, "Submitted, status code: "+response.getStatusLine());
+			
+			content = Util.convertStreamToString(body.getContent());
+			Log.d(TAG, "Body length is: "+content.length());
+			
+			// the portfolio details are in table#MyPortfolioGrid1_a, will need
+			// to pull out & process each of the rows by hand
+			
+			parser = new Parser(content);
+			// these nodes should be the first <TD> in each row where there
+			// is an account being specified (i.e. no headers/footers)
+			nodes = parser.extractAllNodesThatMatch(
+				new AndFilter(
+					new HasParentFilter(
+						new HasAttributeFilter("id", "MyPortfolioGrid1_a"),
+						true),
+					new AndFilter(
+						new TagNameFilter("td"),
+						new HasAttributeFilter("class", "NicknameField"))));
+			
+			for (int i = 0; i < nodes.size(); i++) {
+				Node n = nodes.elementAt(i);
+				Account ac = new Account();
+				
+				// currency is fixed for CBA - TODO constant this
+				ac.setUnit(Currency.getInstance("AUD"));
+				
+				// account name
+				LinkTag a = (LinkTag) n.getFirstChild().getFirstChild();
+				ac.setName(a.getLinkText());
+				
+				// identifier (account number)
+				Node actnoCell = n.getNextSibling().getNextSibling();
+				Span span = (Span) actnoCell.getFirstChild();
+				ac.setIdentifier(span.getStringText());
+				
+				// balance
+				Span balanceCell = (Span) actnoCell.getNextSibling()
+					.getFirstChild().getNextSibling();
+				ac.setBalance(Double.valueOf(balanceCell.getStringText()));
+				
+				Log.i(TAG, "Adding account id["+ ac.getIdentifier() +"] type["
+						+ ac.getName() +"] balance["+ ac.getBalance() +"]");
+				accounts.add(ac);
+			}
+
 		} catch (Exception e) {
 			Log.e(TAG, "Unhandled exception when loading CBA accounts", e);
 		}

@@ -1,0 +1,35 @@
+I/CommonwealthBank(  799): Content: <html>
+I/CommonwealthBank(  799):      <head>
+I/CommonwealthBank(  799):              <title>NetBank Important Message</title>
+I/CommonwealthBank(  799):              <META HTTP-EQUIV="Pragma" CONTENT="no-cache">
+I/CommonwealthBank(  799):              <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
+I/CommonwealthBank(  799):              <link rel="stylesheet" href="unavailable/netbank2.css" type="text/css">
+I/CommonwealthBank(  799):                      <link rel="stylesheet" href="unavailable/modified_netbank2_modify_for_tu.css" type="text/css">
+I/CommonwealthBank(  799):                              <link rel="SHORTCUT ICON" HREF="unavailable/favicon.ico">
+I/CommonwealthBank(  799):      </head>
+I/CommonwealthBank(  799):      <body>
+I/CommonwealthBank(  799):              <table width="800" bgcolor="white" align="center" cellspacing="10" ID="Table1">
+I/CommonwealthBank(  799):                      <tr>
+I/CommonwealthBank(  799):                              <td>
+I/CommonwealthBank(  799):                                      <A href="http://www.commbank.com.au/"><IMG style="BORDER-TOP-WIDTH: 0px; BORDER-LEFT-WIDTH: 0px; BORDER-BOTTOM-WIDTH: 0px; BORDER-RIGHT-WIDTH: 0px"
+I/CommonwealthBank(  799):alt="Commonwealth Bank of Australia" src="unavailable/commbank-logo.png"></A>
+I/CommonwealthBank(  799):                                      <p>
+I/CommonwealthBank(  799):                                              <br /><H3>NetBank is temporarily unavailable.</H3>
+I/CommonwealthBank(  799):                                              <IMG src="unavailable/line_medium_yellow.gif"></p>
+I/CommonwealthBank(  799):
+I/CommonwealthBank(  799):                                      <p><font size="2">This is due to Scheduled Maintenance to enhance your NetBank service.</font></P>
+I/CommonwealthBank(  799):                                      <P><font size="2">The Commonwealth Bank apologises for any inconvenience that this may cause.</font></P>
+I/CommonwealthBank(  799):
+I/CommonwealthBank(  799):                                      <P><font size="2">To find out more details about these changes please go to...  </font>
+I/CommonwealthBank(  799): <a href="http://www.commbank.com.au/update"><font size="2">www.commbank.com.au/update</font></a>
+I/CommonwealthBank(  799):                                      </P>
+I/CommonwealthBank(  799):                                      <p>&nbsp;</p>
+I/CommonwealthBank(  799):                                      <hr size="1" color="#EEEEEE" width="100%" />
+I/CommonwealthBank(  799):                                      <span style="font-size:0.60em; font-family:Verdana, Arial, Helvetica, sans-serif; color:#999999;margin-top: 15px">&copy;
+I/CommonwealthBank(  799):                                              Commonwelth Bank of Australia 2009 ABN 48 123 123 124</span>
+I/CommonwealthBank(  799):                              </p>
+I/CommonwealthBank(  799):                      </tr>
+I/CommonwealthBank(  799):                      </td>
+I/CommonwealthBank(  799):              </table>
+I/CommonwealthBank(  799):      </body>
+I/CommonwealthBank(  799): </html>
