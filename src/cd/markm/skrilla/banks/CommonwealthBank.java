@@ -35,6 +35,8 @@ import cd.markm.skrilla.UsernamePasswordAuth;
 import cd.markm.skrilla.Util;
 
 public class CommonwealthBank extends FinancialInstitution {
+	private static final String CURRENCY = "AUD";
+
 	private static final String TAG = CommonwealthBank.class.getSimpleName();
 	
 	private static final String LOGIN_PAGE = 
@@ -147,6 +149,15 @@ public class CommonwealthBank extends FinancialInstitution {
 			parser = new Parser(content);
 			// these nodes should be the first <TD> in each row where there
 			// is an account being specified (i.e. no headers/footers)
+			NodeList pg = parser.extractAllNodesThatMatch(
+					new HasAttributeFilter("id", "MyPortfolioGrid1_a"));
+			Log.i(TAG, "PortfolioGrid size: "+pg.size());
+			NodeList tds = pg.extractAllNodesThatMatch(
+					new TagNameFilter("td"), true);
+			Log.i(TAG, "TD count: "+tds.size());
+			nodes = tds.extractAllNodesThatMatch(
+					new HasAttributeFilter("class", "NicknameField")); 
+			/*
 			nodes = parser.extractAllNodesThatMatch(
 				new AndFilter(
 					new HasParentFilter(
@@ -155,26 +166,32 @@ public class CommonwealthBank extends FinancialInstitution {
 					new AndFilter(
 						new TagNameFilter("td"),
 						new HasAttributeFilter("class", "NicknameField"))));
+			*/
 			
 			for (int i = 0; i < nodes.size(); i++) {
 				Node n = nodes.elementAt(i);
 				Account ac = new Account();
 				
 				// currency is fixed for CBA - TODO constant this
-				ac.setUnit(Currency.getInstance("AUD"));
+				ac.setUnit(Currency.getInstance(CURRENCY));
 				
 				// account name
-				LinkTag a = (LinkTag) n.getFirstChild().getFirstChild();
+				LinkTag a = (LinkTag) n.getChildren().extractAllNodesThatMatch(
+						new TagNameFilter("a"), true).elementAt(0);
 				ac.setName(a.getLinkText());
 				
 				// identifier (account number)
 				Node actnoCell = n.getNextSibling().getNextSibling();
-				Span span = (Span) actnoCell.getFirstChild();
+				Span span = (Span) actnoCell.getChildren()
+					.extractAllNodesThatMatch(new TagNameFilter("span"), true)
+					.elementAt(0);
 				ac.setIdentifier(span.getStringText());
 				
 				// balance
+				// TODO - works for savings, still broken for home loan
 				Span balanceCell = (Span) actnoCell.getNextSibling()
-					.getFirstChild().getNextSibling();
+					.getChildren().extractAllNodesThatMatch(
+							new TagNameFilter("span"), true).elementAt(1);
 				ac.setBalance(Double.valueOf(balanceCell.getStringText()));
 				
 				Log.i(TAG, "Adding account id["+ ac.getIdentifier() +"] type["
