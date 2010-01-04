@@ -28,6 +28,8 @@ public final class R {
         public static final int auth_details=0x7f050004;
         public static final int balance_widget_name=0x7f050005;
         public static final int institution_list_label=0x7f050003;
+        public static final int menu_cancel=0x7f050008;
+        public static final int menu_save=0x7f050007;
         public static final int portfolios=0x7f050002;
         public static final int widget_loading=0x7f050006;
     }

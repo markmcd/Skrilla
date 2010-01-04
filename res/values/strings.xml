@@ -9,4 +9,6 @@
 
 <string name="balance_widget_name">Balance Widget</string>
 <string name="widget_loading">Loading...</string>
+<string name="menu_save">Save</string>
+<string name="menu_cancel">Cancel</string>
 </resources>
