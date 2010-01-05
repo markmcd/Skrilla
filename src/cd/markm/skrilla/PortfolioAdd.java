@@ -3,10 +3,14 @@ package cd.markm.skrilla;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.content.ContentValues;
+import android.database.SQLException;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
@@ -21,7 +25,7 @@ public class PortfolioAdd extends PreferenceActivity
 	private static final int MENU_SAVE = Menu.FIRST;
 	private static final int MENU_CANCEL = Menu.FIRST + 1;
 	
-	private ArrayList<Preference> prefs;
+	private ArrayList<Preference> prefs;	// per-institution Preferences
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -34,7 +38,7 @@ public class PortfolioAdd extends PreferenceActivity
 
 		// set up the 'add institution' UI
 		ListPreference listInstitutions = (ListPreference) findPreference(INSTITUTION_LIST);
-		prefs.add(listInstitutions);
+		listInstitutions.setValue(null);
 		
 		List<CharSequence> entries = new ArrayList<CharSequence>();
 		
@@ -98,6 +102,7 @@ public class PortfolioAdd extends PreferenceActivity
 						throw new Exception("Unknown type of auth parameter");
 					}
 
+					p.setPersistent(false);
 					p.setOrder(i++);
 					pc.addPreference(p);
 					prefs.add(p);
@@ -128,10 +133,18 @@ public class PortfolioAdd extends PreferenceActivity
         switch (item.getItemId()) {
         case MENU_SAVE:
         	if (validateAndSave()) {
-                finish();
-                return true;
+        		Toast.makeText(getApplicationContext(), 
+        				R.string.portfolio_add_success, 
+        				Toast.LENGTH_SHORT).show();
+        		finish();
+                return false;
         	}
-        	// TODO let the user know what's wrong
+        	else {
+        		Toast.makeText(getApplicationContext(), 
+        				R.string.portfolio_add_fail, 
+        				Toast.LENGTH_SHORT).show();
+        		return false;
+        	}
         case MENU_CANCEL:
             finish();
             return true;
@@ -140,27 +153,103 @@ public class PortfolioAdd extends PreferenceActivity
     }
 
 	private boolean validateAndSave() {
-		for (Preference p : prefs) {
-			// validate
-			// TODO some kind of validation call-back
-			if (p instanceof EditTextPreference) {
-				EditTextPreference etp = (EditTextPreference) p;
-				if (etp.getText().length() < 1) {
-					return false;
-				}
-			}
-			else if (p instanceof ListPreference) {
-				ListPreference lp = (ListPreference) p;
-				if (lp.getEntry() == null) {
-					return false;
-				}
-			}
-
-			// save
-			
-		}
+		// DB stuff
+		DbHelper dbh = new DbHelper(getApplicationContext());
+		SQLiteDatabase db = dbh.getWritableDatabase();
+		db.beginTransaction();
 		
-		return true;
+		try {
+			// first the institution
+			ListPreference instList = (ListPreference) findPreference(INSTITUTION_LIST);
+			CharSequence institutionChars = instList.getEntry();
+			
+			// validate
+			if (institutionChars == null || institutionChars.length() < 1) {
+				Log.i(TAG, "Rejecting invalid instution");
+				db.endTransaction();
+				db.close();
+				return false;
+			}
+			
+			String institution = institutionChars.toString();
+			
+			// save
+			// TODO this should all be in some kind of DB layer
+			Log.d(TAG, "Saving portfolio");
+			ContentValues portfolio = new ContentValues();
+			portfolio.put("Name", institution);
+			portfolio.put("Class", FinancialInstitutionFactory
+					.GetInstitution(institution).getClass().getName());
+			long instId = db.insertOrThrow(
+					DbHelper.DB_TABLE_PORTFOLIO, "Name", portfolio);
+			Log.d(TAG, "Saved, portfolio ID: "+ instId);
+			
+			for (Preference p : prefs) {
+				// validate
+				// TODO some kind of validation call-back
+				String value;
+				if (p instanceof EditTextPreference) {
+					EditTextPreference etp = (EditTextPreference) p;
+					value = etp.getText();
+					if (value == null || value.length() < 1) {
+						Log.i(TAG, "Rejecting empty preference: "+
+								p.getTitle());
+						db.endTransaction();
+						db.close();
+						return false;
+					}
+				}
+				else if (p instanceof ListPreference) {
+					ListPreference lp = (ListPreference) p;
+					CharSequence val = lp.getEntry();
+					if (val == null || val.length() < 1) {
+						Log.i(TAG, "Rejecting empty preference: "+
+								p.getTitle());
+						db.endTransaction();
+						db.close();
+						return false;
+					}
+					else {
+						value = val.toString();
+					}
+				}
+				else {
+					Log.e(TAG, "Unknown preference type: " + p.getClass()
+							.getName());
+					db.endTransaction();
+					db.close();
+					throw new UnsupportedOperationException("Unsupported "+
+							"Preference type");
+				}
+	
+				// save
+				Log.d(TAG, "Saving preference: "+ p.getTitle());
+				ContentValues pref = new ContentValues();
+				pref.put("PortfolioID", instId);
+				pref.put("Field", p.getTitle().toString());
+				pref.put("Value", value);
+				long pid = db.insertOrThrow(DbHelper.DB_TABLE_AUTHDETAIL, 
+						"Value", pref);
+				Log.d(TAG, "Saved: "+ pid);
+			}
 
+			Log.d(TAG, "Success, committing transaction.");
+			db.setTransactionSuccessful();
+			db.endTransaction();
+			db.close();
+			return true;
+		}
+		catch (SQLException sqle) {
+			// TODO probably want to pass this back up a little
+			Log.e(TAG, "SQL problems afoot! "+ sqle.getMessage());
+		} catch (Exception e) {
+			// TODO this is the FinanicialInstitutionFactory unknown 
+			// institution exception - fix this when that gets updated
+			Log.e(TAG, "Exception (probably unknown institution): "+
+					e.getMessage());
+		}
+		db.endTransaction();
+		db.close();
+		return false;
 	}
 }

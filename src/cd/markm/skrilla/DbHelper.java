@@ -10,8 +10,8 @@ public class DbHelper extends SQLiteOpenHelper {
 	private static final String TAG = DbHelper.class.getSimpleName();
 	
 	private static final String DB_NAME = "SkrillaDB";
-	private static final String DB_TABLE_PORTFOLIO = "Portfolio";
-	private static final String DB_TABLE_AUTHDETAIL = "AuthDetail";
+	public static final String DB_TABLE_PORTFOLIO = "Portfolio";
+	public static final String DB_TABLE_AUTHDETAIL = "AuthDetail";
 	private static final int DB_VERSION = 1;
 
 	private DbHelper(Context context, String name, CursorFactory factory,

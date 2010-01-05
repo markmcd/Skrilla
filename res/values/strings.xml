@@ -11,4 +11,6 @@
 <string name="widget_loading">Loading...</string>
 <string name="menu_save">Save</string>
 <string name="menu_cancel">Cancel</string>
+<string name="portfolio_add_fail">Select an institution and enter the necessary values for authentication</string>
+<string name="portfolio_add_success">Portfolio saved</string>
 </resources>
