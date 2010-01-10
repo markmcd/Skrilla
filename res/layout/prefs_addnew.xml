@@ -6,6 +6,10 @@
 		android:key="institution_list"
 		android:title="@string/institution_list_label"
 	 />
+	<EditTextPreference
+		android:key="portfolio_nickname"
+		android:title="@string/portfolio_nickname_label"
+	/>
 	<PreferenceCategory
 		android:key="institution_auth_prefs"
 		android:title="@string/auth_details" />

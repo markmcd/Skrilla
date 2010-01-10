@@ -59,7 +59,13 @@ public class CommonwealthBank extends FinancialInstitution {
 		List<Account> accounts = new ArrayList<Account>();
 		
 		try {
-			// first we load up the form page & rip out all the internal variables 
+			// set up a mobile useragent - not needed for standard site
+			//System.getProperties().setProperty("httpclient.useragent", 
+			//		"Mozilla/5.0 (Linux; U; Android 1.0; en-us; generic) "+
+			//		"AppleWebKit/525.10+ (KHTML, like Gecko) Version/3.0.4 "+
+			//		"Mobile Safari/523.12.2");
+			
+			// first we load up the form page & rip out all the internal variables
 			DefaultHttpClient client = new DefaultHttpClient();
 			HttpGet loginpage = new HttpGet(LOGIN_PAGE);
 			

@@ -7,6 +7,7 @@ import android.content.ContentValues;
 import android.database.SQLException;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.text.method.PasswordTransformationMethod;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -20,13 +21,21 @@ import android.preference.Preference.OnPreferenceChangeListener;
 
 public class PortfolioAdd extends PreferenceActivity
 		implements OnPreferenceChangeListener {
-	private static final String TAG = PortfolioAdd.class.getSimpleName();
+
 	private static final String INSTITUTION_LIST = "institution_list";
+	private static final String INSTITUTION_AUTH_PREFS = 
+		"institution_auth_prefs";
+	private static final String PORTFOLIO_NICKNAME = "portfolio_nickname";
+	
+	private static final String TAG = PortfolioAdd.class.getSimpleName();
+
 	private static final int MENU_SAVE = Menu.FIRST;
 	private static final int MENU_CANCEL = Menu.FIRST + 1;
 	
-	private ArrayList<Preference> prefs;	// per-institution Preferences
-	
+	private ArrayList<Preference> mPrefs;	// per-institution Preferences
+	private ListPreference mInstitutionList;
+	private EditTextPreference mPortfolioNickname;
+
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		Log.d(TAG, "Adding new portfolio");
@@ -34,11 +43,15 @@ public class PortfolioAdd extends PreferenceActivity
 		
 		addPreferencesFromResource(R.layout.prefs_addnew);
 		
-		prefs = new ArrayList<Preference>();
+		mPrefs = new ArrayList<Preference>();
 
 		// set up the 'add institution' UI
-		ListPreference listInstitutions = (ListPreference) findPreference(INSTITUTION_LIST);
-		listInstitutions.setValue(null);
+		mInstitutionList = (ListPreference) findPreference(INSTITUTION_LIST);
+		mInstitutionList.setValue(null);
+		mPortfolioNickname = (EditTextPreference) 
+			findPreference(PORTFOLIO_NICKNAME);
+		mPortfolioNickname.setOnPreferenceChangeListener(this);
+		mPortfolioNickname.setText(null);
 		
 		List<CharSequence> entries = new ArrayList<CharSequence>();
 		
@@ -60,20 +73,30 @@ public class PortfolioAdd extends PreferenceActivity
 		CharSequence[] ea = new CharSequence[entries.size()];
 		entries.toArray(ea);
 		
-		listInstitutions.setEntries(ea);
-		listInstitutions.setEntryValues(ea);
-		listInstitutions.setOnPreferenceChangeListener(this);
+		mInstitutionList.setEntries(ea);
+		mInstitutionList.setEntryValues(ea);
+		mInstitutionList.setOnPreferenceChangeListener(this);
 	};
 	
 	public boolean onPreferenceChange(Preference preference, Object newValue) {
+		if (preference == mInstitutionList) {
+			institutionSelected(preference, newValue);
+		}
+		else if (preference == mPortfolioNickname) {
+			mPortfolioNickname.setSummary((CharSequence) newValue);
+		}
+		return true;
+	}
+
+	private void institutionSelected(Preference preference, Object newValue) {
 		// update the screen with new information
 		if (newValue != null) {
-			// update the summary of the institution pref
+			// update the summary of the institution preference
 			preference.setSummary((CharSequence) newValue);
 		
 			// add the auth details for the selected institution
 			PreferenceCategory pc = (PreferenceCategory)
-				findPreference("institution_auth_prefs");
+				findPreference(INSTITUTION_AUTH_PREFS);
 			pc.removeAll();
 			try {
 				FinancialInstitution fi = FinancialInstitutionFactory
@@ -89,13 +112,19 @@ public class PortfolioAdd extends PreferenceActivity
 					// TODO these need to be styled properly
 					switch (authDetails.getDef(label)) {
 					case STRING:
-						p = new EditTextPreference(pc.getContext());
-						p.setTitle(label);
+						EditTextPreference str = new EditTextPreference(pc.getContext());
+						str.setDialogTitle(label);
+						str.setTitle(label);
+						p = str;
 						break;
 					case SECURE:
-						// TODO make this a real password dialog
-						p = new EditTextPreference(pc.getContext());
-						p.setTitle(label);
+						EditTextPreference passPref = new EditTextPreference(pc.getContext());
+						passPref.setDialogTitle(label);
+						passPref.setTitle(label);
+						// password mode
+						passPref.getEditText().setTransformationMethod(
+								new PasswordTransformationMethod());
+						p = passPref;
 						break;
 					default:
 						// TODO real exception
@@ -105,7 +134,7 @@ public class PortfolioAdd extends PreferenceActivity
 					p.setPersistent(false);
 					p.setOrder(i++);
 					pc.addPreference(p);
-					prefs.add(p);
+					mPrefs.add(p);
 				}
 
 			} catch (Exception e) {
@@ -113,7 +142,6 @@ public class PortfolioAdd extends PreferenceActivity
 				e.printStackTrace();
 			}
 		}
-		return true;
 	}
 
 	@Override
@@ -133,17 +161,18 @@ public class PortfolioAdd extends PreferenceActivity
         switch (item.getItemId()) {
         case MENU_SAVE:
         	if (validateAndSave()) {
-        		Toast.makeText(getApplicationContext(), 
+        		setResult(RESULT_OK);
+        		finish();
+                Toast.makeText(getApplicationContext(), 
         				R.string.portfolio_add_success, 
         				Toast.LENGTH_SHORT).show();
-        		finish();
-                return false;
+        		return true;
         	}
         	else {
         		Toast.makeText(getApplicationContext(), 
         				R.string.portfolio_add_fail, 
         				Toast.LENGTH_SHORT).show();
-        		return false;
+        		return true;
         	}
         case MENU_CANCEL:
             finish();
@@ -152,6 +181,13 @@ public class PortfolioAdd extends PreferenceActivity
         return super.onOptionsItemSelected(item);
     }
 
+    private boolean checkSet(CharSequence s) {
+    	if (s == null || s.length() < 1) {
+    		return false;
+    	}
+    	return true;
+    }
+    
 	private boolean validateAndSave() {
 		// DB stuff
 		DbHelper dbh = new DbHelper(getApplicationContext());
@@ -159,13 +195,16 @@ public class PortfolioAdd extends PreferenceActivity
 		db.beginTransaction();
 		
 		try {
-			// first the institution
+			// first the standard preferences
 			ListPreference instList = (ListPreference) findPreference(INSTITUTION_LIST);
 			CharSequence institutionChars = instList.getEntry();
+			EditTextPreference nicknamePref = (EditTextPreference) 
+				findPreference(PORTFOLIO_NICKNAME);
+			String nickname = nicknamePref.getText();
 			
 			// validate
-			if (institutionChars == null || institutionChars.length() < 1) {
-				Log.i(TAG, "Rejecting invalid instution");
+			if (!(checkSet(institutionChars) || checkSet(nickname))) {
+				Log.i(TAG, "Rejecting invalid details");
 				db.endTransaction();
 				db.close();
 				return false;
@@ -180,11 +219,13 @@ public class PortfolioAdd extends PreferenceActivity
 			portfolio.put("Name", institution);
 			portfolio.put("Class", FinancialInstitutionFactory
 					.GetInstitution(institution).getClass().getName());
+			// TODO check if the nickname is already in use
+			portfolio.put("Nickname", nickname);
 			long instId = db.insertOrThrow(
 					DbHelper.DB_TABLE_PORTFOLIO, "Name", portfolio);
 			Log.d(TAG, "Saved, portfolio ID: "+ instId);
 			
-			for (Preference p : prefs) {
+			for (Preference p : mPrefs) {
 				// validate
 				// TODO some kind of validation call-back
 				String value;
@@ -221,7 +262,7 @@ public class PortfolioAdd extends PreferenceActivity
 					throw new UnsupportedOperationException("Unsupported "+
 							"Preference type");
 				}
-	
+
 				// save
 				Log.d(TAG, "Saving preference: "+ p.getTitle());
 				ContentValues pref = new ContentValues();

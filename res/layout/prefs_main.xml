@@ -4,7 +4,7 @@
 	android:title="@string/app_name">
 	<PreferenceScreen 
 		android:key="add_new_portfolio"
-		android:title="@string/add_new_portfolio"></PreferenceScreen>
+		android:title="@string/add_new_portfolio" />
 	<PreferenceCategory
 		android:key="portfolio_list"
 		android:title="@string/portfolios" /> 

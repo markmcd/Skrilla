@@ -1,14 +1,23 @@
 package cd.markm.skrilla;
 
+import java.util.List;
+
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.preference.EditTextPreference;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
+import android.preference.PreferenceCategory;
 import android.preference.PreferenceScreen;
 import android.preference.Preference.OnPreferenceClickListener;
 import android.util.Log;
 
 public class SkrillaPrefs extends PreferenceActivity { 
+	private static final String PORTFOLIO_LIST = "portfolio_list";
+
+	private static final String ADD_NEW_PORTFOLIO = "add_new_portfolio";
+
 	private static final String TAG = SkrillaPrefs.class.getSimpleName();
 	
 	private PreferenceScreen mAddNewPortfolio;
@@ -22,13 +31,17 @@ public class SkrillaPrefs extends PreferenceActivity {
 
         addPreferencesFromResource(R.layout.prefs_main);
 
-        mAddNewPortfolio = (PreferenceScreen) findPreference("add_new_portfolio");
-        mAddNewPortfolio.setOnPreferenceClickListener(new OnPreferenceClickListener() {
-			public boolean onPreferenceClick(Preference preference) {
-				startAddPortfolio();
-				return true;
-			}
+        mAddNewPortfolio = (PreferenceScreen) 
+        	findPreference(ADD_NEW_PORTFOLIO);
+        mAddNewPortfolio.setOnPreferenceClickListener(
+        	new OnPreferenceClickListener() {
+				public boolean onPreferenceClick(Preference preference) {
+					startAddPortfolio();
+					return true;
+				}
 		});
+        
+        updatePortfolioList();
     }
     
     private void startAddPortfolio() {
@@ -39,13 +52,34 @@ public class SkrillaPrefs extends PreferenceActivity {
 	@Override
 	protected void onActivityResult(int requestCode, int resultCode, Intent data) {
 		//super.onActivityResult(requestCode, resultCode, data);
-		if (resultCode == RESULT_CANCELED) {
+		switch(resultCode) {
+		case RESULT_CANCELED:
 			Log.d(TAG, "Result cancelled");
-		}
-		else {
+			break;
+			
+		case RESULT_OK:
 			if (requestCode == REQUEST_ADD_PORTFOLIO) {
-				Log.d(TAG, "Add portfolio returned: "+resultCode);
+				updatePortfolioList();
 			}
+			break;
+		}
+	}
+	
+	private void updatePortfolioList() {
+		DbHelper dbh = new DbHelper(getApplicationContext());
+		SQLiteDatabase db = dbh.getReadableDatabase();
+		
+		List<Portfolio> portfolios = DbHelper.GetPortfolios(db);
+		
+		PreferenceCategory pc = (PreferenceCategory) 
+			findPreference(PORTFOLIO_LIST);
+		
+		for (Portfolio p : portfolios) {
+			EditTextPreference etp = new EditTextPreference(pc.getContext());
+			etp.setTitle(p.getNickname());
+			etp.setSummary(p.getInstitution());
+			etp.setEnabled(false);
+			pc.addPreference(etp);
 		}
 	}
 }
